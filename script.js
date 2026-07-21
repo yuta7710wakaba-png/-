@@ -1,6 +1,7 @@
 const menu = document.getElementById('menu');
 const viewer = document.getElementById('viewer');
 const scene = document.getElementById('scene');
+const nextScene = document.getElementById('nextScene');
 const paperStage = document.getElementById('paperStage');
 const counter = document.getElementById('counter');
 const teacherMenu = document.getElementById('teacherMenu');
@@ -46,6 +47,7 @@ function parkSvg(s){
 
 function render(){
   scene.innerHTML = parkSvg({...material.steps[step], highlight});
+  nextScene.innerHTML = '';
   counter.textContent = `${step + 1}/${material.steps.length}`;
 }
 
@@ -55,7 +57,7 @@ function openViewer(){
   hint.classList.add('show'); setTimeout(()=>hint.classList.remove('show'),2500);
 }
 function closeViewer(){
-  isTurning=false; paperStage.classList.remove('turning-next','turning-prev','arrive-next','arrive-prev');
+  isTurning=false; paperStage.classList.remove('turning-next','turning-prev');
   viewer.classList.remove('active'); menu.classList.add('active'); closeTeacherMenu();
   if(document.fullscreenElement) document.exitFullscreen().catch(()=>{});
 }
@@ -66,22 +68,21 @@ function turnPage(direction){
 
   isTurning = true;
   highlight = false;
-  const outClass = direction === 'next' ? 'turning-next' : 'turning-prev';
-  const inClass = direction === 'next' ? 'arrive-next' : 'arrive-prev';
-  paperStage.classList.remove('turning-next','turning-prev','arrive-next','arrive-prev');
+  const turnClass = direction === 'next' ? 'turning-next' : 'turning-prev';
+
+  nextScene.innerHTML = parkSvg({...material.steps[target], highlight:false});
+  paperStage.classList.remove('turning-next','turning-prev');
   void paperStage.offsetWidth;
-  paperStage.classList.add(outClass);
+  paperStage.classList.add(turnClass);
 
   window.setTimeout(()=>{
     step = target;
-    render();
-    paperStage.classList.remove(outClass);
-    paperStage.classList.add(inClass);
-    window.setTimeout(()=>{
-      paperStage.classList.remove(inClass);
-      isTurning = false;
-    },340);
-  },360);
+    scene.innerHTML = nextScene.innerHTML;
+    nextScene.innerHTML = '';
+    counter.textContent = `${step + 1}/${material.steps.length}`;
+    paperStage.classList.remove(turnClass);
+    isTurning = false;
+  },640);
 }
 function next(){ turnPage('next'); }
 function prev(){ turnPage('prev'); }

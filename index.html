@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#dff4ff">
-<title>みんなでみつけよう！ Ver1.1</title>
-<link rel="stylesheet" href="style.css?v=1.1.0">
+<title>みんなでみつけよう！ Ver1.2</title>
+<link rel="stylesheet" href="style.css?v=1.2.0">
 </head>
 <body>
 <div id="app">
@@ -29,12 +29,12 @@
         <button id="startBtn" class="start-btn" type="button">▶ はじめる</button>
       </article>
 
-      <div class="note">Ver1.1｜電子紙芝居風のページめくりに対応。教材は今後少しずつ追加できます。</div>
+      <div class="note">Ver1.2｜電子紙芝居風のページめくりに対応。教材は今後少しずつ追加できます。</div>
     </div>
   </section>
 
   <section id="viewer" class="screen" aria-label="教材表示画面">
-    <div id="paperStage"><div id="scene" class="paper-page"></div><div id="paperBack" aria-hidden="true"></div></div>
+    <div id="paperStage"><div id="nextScene" class="paper-page under-page" aria-hidden="true"></div><div id="scene" class="paper-page top-page"></div><div id="pageFold" aria-hidden="true"></div></div>
     <div class="nav-zone left" id="prevZone" aria-label="前へ戻る"></div>
     <div class="nav-zone right" id="nextZone" aria-label="次へ進む"></div>
     <button id="closeBtn" class="close-btn" type="button" aria-label="閉じる">×</button>
@@ -56,7 +56,7 @@
     </div>
   </section>
 </div>
-<script src="data.js?v=1.1.0"></script>
-<script src="script.js?v=1.1.0"></script>
+<script src="data.js?v=1.2.0"></script>
+<script src="script.js?v=1.2.0"></script>
 </body>
 </html>

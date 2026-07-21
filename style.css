@@ -23,79 +23,80 @@ button{font:inherit}
 #teacherMenu{position:absolute;inset:0;z-index:12;display:none;align-items:center;justify-content:center;background:rgba(20,35,43,.58);backdrop-filter:blur(5px);padding:24px}#teacherMenu.open{display:flex}
 .panel{width:min(560px,100%);background:#fff;border-radius:26px;padding:26px;box-shadow:0 24px 60px rgba(0,0,0,.35)}.panel h3{font-size:28px;margin:0 0 18px}.panel .row{display:flex;gap:12px;flex-wrap:wrap}.panel button{border:0;border-radius:16px;padding:14px 18px;font-weight:800;font-size:18px;background:#eaf5fa;color:#234;cursor:pointer}.panel button.primary{background:var(--accent);color:#fff}.panel button.danger{background:#ffe8e8;color:#9b3838}.panel p{color:var(--muted);line-height:1.7}
 @media(max-width:720px){.material-card{grid-template-columns:1fr}.start-btn{width:100%}.menu-wrap{justify-content:flex-start;padding-top:28px}.close-btn{width:54px;height:54px;font-size:28px}}
-/* Ver1.1 電子紙芝居風ページめくり */
+/* Ver1.2 絵本風ページめくり：白画面を挟まず、次の絵を下に置いたままめくる */
 #paperStage{
   position:absolute;
   inset:0;
   overflow:hidden;
-  perspective:1800px;
+  perspective:2200px;
   background:#fff;
+  isolation:isolate;
 }
-#scene.paper-page{
+#scene.paper-page,#nextScene.paper-page{
   position:absolute;
   inset:0;
-  transform-style:preserve-3d;
-  backface-visibility:hidden;
-  will-change:transform,filter,opacity;
+  width:100%;
+  height:100%;
   background:#fff;
-  box-shadow:0 0 0 rgba(0,0,0,0);
 }
-#paperBack{
+#scene svg,#nextScene svg{width:100%;height:100%;display:block}
+#nextScene{z-index:1;visibility:hidden}
+#scene{z-index:3;transform-style:preserve-3d;backface-visibility:hidden;will-change:clip-path,transform,filter}
+#pageFold{
   position:absolute;
-  inset:0;
+  top:0;
+  bottom:0;
+  width:18%;
+  z-index:4;
   pointer-events:none;
   opacity:0;
-  background:linear-gradient(90deg,#fff 0%,#fbfbf8 54%,#ece9df 100%);
-  z-index:2;
+  will-change:transform,opacity;
 }
+#paperStage.turning-next #nextScene,
+#paperStage.turning-prev #nextScene{visibility:visible}
 #paperStage.turning-next #scene{
   transform-origin:left center;
-  animation:paperNext .48s cubic-bezier(.55,.06,.32,1) both;
-  z-index:3;
+  animation:bookTurnNext .62s cubic-bezier(.35,.04,.18,1) both;
 }
 #paperStage.turning-prev #scene{
   transform-origin:right center;
-  animation:paperPrev .48s cubic-bezier(.55,.06,.32,1) both;
-  z-index:3;
+  animation:bookTurnPrev .62s cubic-bezier(.35,.04,.18,1) both;
 }
-#paperStage.turning-next #paperBack,
-#paperStage.turning-prev #paperBack{
-  animation:paperWhite .48s ease both;
+#paperStage.turning-next #pageFold{
+  right:-3%;
+  background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.72) 38%,rgba(225,220,208,.72) 70%,rgba(80,70,60,.22));
+  box-shadow:-22px 0 30px rgba(0,0,0,.15);
+  animation:foldNext .62s cubic-bezier(.35,.04,.18,1) both;
 }
-#paperStage.arrive-next #scene{
-  transform-origin:right center;
-  animation:paperArriveNext .34s cubic-bezier(.2,.75,.25,1) both;
+#paperStage.turning-prev #pageFold{
+  left:-3%;
+  background:linear-gradient(270deg,rgba(255,255,255,0),rgba(255,255,255,.72) 38%,rgba(225,220,208,.72) 70%,rgba(80,70,60,.22));
+  box-shadow:22px 0 30px rgba(0,0,0,.15);
+  animation:foldPrev .62s cubic-bezier(.35,.04,.18,1) both;
 }
-#paperStage.arrive-prev #scene{
-  transform-origin:left center;
-  animation:paperArrivePrev .34s cubic-bezier(.2,.75,.25,1) both;
+@keyframes bookTurnNext{
+  0%{clip-path:inset(0 0 0 0);transform:rotateY(0deg) translateX(0);filter:brightness(1)}
+  42%{clip-path:inset(0 20% 0 0);transform:rotateY(-7deg) translateX(-1%);filter:brightness(.99)}
+  100%{clip-path:inset(0 100% 0 0);transform:rotateY(-18deg) translateX(-4%);filter:brightness(.96)}
 }
-@keyframes paperNext{
-  0%{transform:translateX(0) rotateY(0deg);filter:brightness(1);box-shadow:0 0 0 rgba(0,0,0,0)}
-  48%{transform:translateX(-5%) rotateY(-18deg);filter:brightness(.97);box-shadow:28px 0 38px rgba(0,0,0,.18)}
-  100%{transform:translateX(-102%) rotateY(-38deg);filter:brightness(.93);box-shadow:40px 0 56px rgba(0,0,0,.2)}
+@keyframes bookTurnPrev{
+  0%{clip-path:inset(0 0 0 0);transform:rotateY(0deg) translateX(0);filter:brightness(1)}
+  42%{clip-path:inset(0 0 0 20%);transform:rotateY(7deg) translateX(1%);filter:brightness(.99)}
+  100%{clip-path:inset(0 0 0 100%);transform:rotateY(18deg) translateX(4%);filter:brightness(.96)}
 }
-@keyframes paperPrev{
-  0%{transform:translateX(0) rotateY(0deg);filter:brightness(1);box-shadow:0 0 0 rgba(0,0,0,0)}
-  48%{transform:translateX(5%) rotateY(18deg);filter:brightness(.97);box-shadow:-28px 0 38px rgba(0,0,0,.18)}
-  100%{transform:translateX(102%) rotateY(38deg);filter:brightness(.93);box-shadow:-40px 0 56px rgba(0,0,0,.2)}
+@keyframes foldNext{
+  0%{opacity:0;transform:translateX(0) scaleX(.35) skewY(0deg)}
+  18%{opacity:.85}
+  60%{opacity:1;transform:translateX(-330%) scaleX(1) skewY(-1deg)}
+  100%{opacity:0;transform:translateX(-620%) scaleX(.35) skewY(0deg)}
 }
-@keyframes paperWhite{
-  0%{opacity:0}
-  45%{opacity:.35}
-  70%{opacity:1}
-  100%{opacity:1}
-}
-@keyframes paperArriveNext{
-  0%{transform:translateX(7%) rotateY(6deg);opacity:.5;filter:brightness(1.04)}
-  100%{transform:translateX(0) rotateY(0);opacity:1;filter:brightness(1)}
-}
-@keyframes paperArrivePrev{
-  0%{transform:translateX(-7%) rotateY(-6deg);opacity:.5;filter:brightness(1.04)}
-  100%{transform:translateX(0) rotateY(0);opacity:1;filter:brightness(1)}
+@keyframes foldPrev{
+  0%{opacity:0;transform:translateX(0) scaleX(.35) skewY(0deg)}
+  18%{opacity:.85}
+  60%{opacity:1;transform:translateX(330%) scaleX(1) skewY(1deg)}
+  100%{opacity:0;transform:translateX(620%) scaleX(.35) skewY(0deg)}
 }
 @media (prefers-reduced-motion:reduce){
   #paperStage.turning-next #scene,#paperStage.turning-prev #scene,
-  #paperStage.arrive-next #scene,#paperStage.arrive-prev #scene,
-  #paperStage.turning-next #paperBack,#paperStage.turning-prev #paperBack{animation-duration:.16s}
+  #paperStage.turning-next #pageFold,#paperStage.turning-prev #pageFold{animation-duration:.2s}
 }
