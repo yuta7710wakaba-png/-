@@ -6,13 +6,33 @@ const paperStage = document.getElementById('paperStage');
 const counter = document.getElementById('counter');
 const teacherMenu = document.getElementById('teacherMenu');
 const hint = document.getElementById('hint');
-let step = 0;
+
+let questionIndex = 0;
+let pageIndex = 0; // 0＝変化前、1＝変化後
 let highlight = false;
 let holdTimer = null;
 let moved = false;
 let isTurning = false;
 
-function parkSvg(s){
+function normalizeState(state = {}) {
+  return {
+    ball: false,
+    flower: false,
+    birdCount: 0,
+    shirtColor: '#79b7f2',
+    cup: false,
+    flowerSide: 'left',
+    ...state
+  };
+}
+
+function getCurrentState(qIndex = questionIndex, pIndex = pageIndex) {
+  const question = material.questions[qIndex];
+  return normalizeState(pIndex === 0 ? question.before : question.after);
+}
+
+function parkSvg(state, showHighlight = false) {
+  const s = normalizeState(state);
   const ball = s.ball ? `<g class="change-target"><circle cx="1220" cy="690" r="52" fill="#ffcf4a" stroke="#fff" stroke-width="10"/><path d="M1170 690h100M1220 640v100" stroke="#ef7c57" stroke-width="16"/></g>` : '';
   const flowerX = s.flowerSide === 'right' ? 1340 : 340;
   const flower = s.flower ? `<g class="change-target"><circle cx="${flowerX}" cy="710" r="20" fill="#ffd84f"/><g fill="#ff8fb1"><circle cx="${flowerX}" cy="676" r="23"/><circle cx="${flowerX + 34}" cy="710" r="23"/><circle cx="${flowerX}" cy="744" r="23"/><circle cx="${flowerX - 34}" cy="710" r="23"/></g><path d="M${flowerX} 748v72" stroke="#4ca66b" stroke-width="13"/></g>` : '';
@@ -20,6 +40,7 @@ function parkSvg(s){
   const bird2 = s.birdCount >= 2 ? `<path d="M1220 270q30-34 60 0q30-34 60 0" fill="none" stroke="#405e78" stroke-width="12" stroke-linecap="round"/>` : '';
   const birds = (bird1 || bird2) ? `<g class="change-target">${bird1}${bird2}</g>` : '';
   const cup = s.cup ? `<g class="change-target"><rect x="1150" y="485" width="46" height="62" rx="8" fill="#fff7df" stroke="#da8e57" stroke-width="8"/><path d="M1196 500q36 4 24 38q-8 18-24 10" fill="none" stroke="#da8e57" stroke-width="8"/></g>` : '';
+
   return `
   <svg viewBox="0 0 1600 900" role="img" aria-label="公園の場面">
     <defs>
@@ -41,77 +62,169 @@ function parkSvg(s){
       <rect x="0" y="140" width="210" height="36" rx="10" fill="#9a6745"/><rect x="22" y="176" width="25" height="120" fill="#6d4b38"/><rect x="164" y="176" width="25" height="120" fill="#6d4b38"/>
     </g>
     <g transform="translate(520 540)">
-      <circle cx="0" cy="0" r="55" fill="#ffd2b8"/><path d="M-48-15q48-65 96 0" fill="#704e3c"/><rect x="-55" y="52" width="110" height="155" rx="42" fill="${s.shirtColor || '#79b7f2'}"/><path d="M-35 205l-25 115M35 205l25 115" stroke="#536c82" stroke-width="25" stroke-linecap="round"/><path d="M-50 95l-85 65M50 95l85 65" stroke="#ffd2b8" stroke-width="24" stroke-linecap="round"/>
+      <circle cx="0" cy="0" r="55" fill="#ffd2b8"/><path d="M-48-15q48-65 96 0" fill="#704e3c"/><rect x="-55" y="52" width="110" height="155" rx="42" fill="${s.shirtColor}"/><path d="M-35 205l-25 115M35 205l25 115" stroke="#536c82" stroke-width="25" stroke-linecap="round"/><path d="M-50 95l-85 65M50 95l85 65" stroke="#ffd2b8" stroke-width="24" stroke-linecap="round"/>
       <circle cx="-18" cy="0" r="5" fill="#445"/><circle cx="18" cy="0" r="5" fill="#445"/><path d="M-18 24q18 16 36 0" fill="none" stroke="#d36f6f" stroke-width="5" stroke-linecap="round"/>
     </g>
     ${ball}${flower}${birds}${cup}
-    ${highlight ? `<rect x="20" y="20" width="1560" height="860" rx="30" fill="none" stroke="#ff5e5e" stroke-width="18" stroke-dasharray="30 20" filter="url(#glow)"/>` : ''}
+    ${showHighlight ? `<rect x="20" y="20" width="1560" height="860" rx="30" fill="none" stroke="#ff5e5e" stroke-width="18" stroke-dasharray="30 20" filter="url(#glow)"/>` : ''}
   </svg>`;
 }
 
-function render(){
-  scene.innerHTML = parkSvg({...material.steps[step], highlight});
-  nextScene.innerHTML = '';
-  counter.textContent = `${step + 1}/${material.steps.length}`;
+function renderScene(qIndex = questionIndex, pIndex = pageIndex, showHighlight = highlight) {
+  return parkSvg(getCurrentState(qIndex, pIndex), showHighlight);
 }
 
-function openViewer(){
-  step = 0; highlight = false; render();
-  menu.classList.remove('active'); viewer.classList.add('active');
-  hint.classList.add('show'); setTimeout(()=>hint.classList.remove('show'),2500);
+function updateCounter() {
+  const pageText = pageIndex === 0 ? '変化前' : '変化後';
+  counter.textContent = `問題 ${questionIndex + 1}/${material.questions.length}｜${pageText}`;
 }
-function closeViewer(){
-  isTurning=false; paperStage.classList.remove('turning-next','turning-prev');
-  viewer.classList.remove('active'); menu.classList.add('active'); closeTeacherMenu();
-  if(document.fullscreenElement) document.exitFullscreen().catch(()=>{});
+
+function render() {
+  scene.innerHTML = renderScene();
+  nextScene.innerHTML = '';
+  updateCounter();
 }
-function turnPage(direction){
-  if(isTurning) return;
-  const target = direction === 'next' ? step + 1 : step - 1;
-  if(target < 0 || target >= material.steps.length) return;
+
+function openViewer() {
+  questionIndex = 0;
+  pageIndex = 0;
+  highlight = false;
+  render();
+  menu.classList.remove('active');
+  viewer.classList.add('active');
+  hint.classList.add('show');
+  setTimeout(() => hint.classList.remove('show'), 2500);
+}
+
+function closeViewer() {
+  isTurning = false;
+  paperStage.classList.remove('turning-next', 'turning-prev');
+  viewer.classList.remove('active');
+  menu.classList.add('active');
+  closeTeacherMenu();
+  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+}
+
+function getTarget(direction) {
+  let q = questionIndex;
+  let p = pageIndex;
+
+  if (direction === 'next') {
+    if (p === 0) {
+      p = 1;
+    } else {
+      q += 1;
+      p = 0;
+    }
+  } else {
+    if (p === 1) {
+      p = 0;
+    } else {
+      q -= 1;
+      p = 1;
+    }
+  }
+
+  if (q < 0 || q >= material.questions.length) return null;
+  return { questionIndex: q, pageIndex: p };
+}
+
+function turnPage(direction) {
+  if (isTurning) return;
+
+  const target = getTarget(direction);
+  if (!target) return;
 
   isTurning = true;
   highlight = false;
   const turnClass = direction === 'next' ? 'turning-next' : 'turning-prev';
 
-  nextScene.innerHTML = parkSvg({...material.steps[target], highlight:false});
-  paperStage.classList.remove('turning-next','turning-prev');
+  nextScene.innerHTML = renderScene(target.questionIndex, target.pageIndex, false);
+  paperStage.classList.remove('turning-next', 'turning-prev');
   void paperStage.offsetWidth;
   paperStage.classList.add(turnClass);
 
-  window.setTimeout(()=>{
-    step = target;
+  window.setTimeout(() => {
+    questionIndex = target.questionIndex;
+    pageIndex = target.pageIndex;
     scene.innerHTML = nextScene.innerHTML;
     nextScene.innerHTML = '';
-    counter.textContent = `${step + 1}/${material.steps.length}`;
+    updateCounter();
     paperStage.classList.remove(turnClass);
     isTurning = false;
-  },640);
+  }, 640);
 }
-function next(){ turnPage('next'); }
-function prev(){ turnPage('prev'); }
-function openTeacherMenu(){ teacherMenu.classList.add('open'); teacherMenu.setAttribute('aria-hidden','false'); }
-function closeTeacherMenu(){ teacherMenu.classList.remove('open'); teacherMenu.setAttribute('aria-hidden','true'); }
 
-function startHold(){ moved=false; clearTimeout(holdTimer); holdTimer=setTimeout(()=>{ if(!moved) openTeacherMenu(); },900); }
-function cancelHold(){ clearTimeout(holdTimer); }
+function next() { turnPage('next'); }
+function prev() { turnPage('prev'); }
+function openTeacherMenu() {
+  teacherMenu.classList.add('open');
+  teacherMenu.setAttribute('aria-hidden', 'false');
+}
+function closeTeacherMenu() {
+  teacherMenu.classList.remove('open');
+  teacherMenu.setAttribute('aria-hidden', 'true');
+}
 
-document.getElementById('startBtn').addEventListener('click',openViewer);
-document.getElementById('closeBtn').addEventListener('click',e=>{e.stopPropagation();closeViewer();});
-document.getElementById('nextZone').addEventListener('click',()=>{if(!teacherMenu.classList.contains('open'))next();});
-document.getElementById('prevZone').addEventListener('click',()=>{if(!teacherMenu.classList.contains('open'))prev();});
-viewer.addEventListener('pointerdown',e=>{ if(e.target.closest('button')||teacherMenu.classList.contains('open')) return; startHold(); });
-viewer.addEventListener('pointermove',()=>{moved=true;cancelHold();});
-viewer.addEventListener('pointerup',cancelHold);
-viewer.addEventListener('pointercancel',cancelHold);
-document.getElementById('firstBtn').addEventListener('click',()=>{step=0;highlight=false;render();closeTeacherMenu();});
-document.getElementById('answerBtn').addEventListener('click',()=>{highlight=true;render();closeTeacherMenu();});
-document.getElementById('resumeBtn').addEventListener('click',closeTeacherMenu);
-document.getElementById('exitBtn').addEventListener('click',closeViewer);
-document.getElementById('fullscreenBtn').addEventListener('click',async()=>{
-  try{ if(!document.fullscreenElement) await document.documentElement.requestFullscreen(); else await document.exitFullscreen(); }catch(e){}
+function startHold() {
+  moved = false;
+  clearTimeout(holdTimer);
+  holdTimer = setTimeout(() => {
+    if (!moved) openTeacherMenu();
+  }, 900);
+}
+function cancelHold() { clearTimeout(holdTimer); }
+
+document.getElementById('materialTitle').textContent = material.title;
+document.getElementById('startBtn').addEventListener('click', openViewer);
+document.getElementById('closeBtn').addEventListener('click', e => {
+  e.stopPropagation();
+  closeViewer();
+});
+document.getElementById('nextZone').addEventListener('click', () => {
+  if (!teacherMenu.classList.contains('open')) next();
+});
+document.getElementById('prevZone').addEventListener('click', () => {
+  if (!teacherMenu.classList.contains('open')) prev();
+});
+viewer.addEventListener('pointerdown', e => {
+  if (e.target.closest('button') || teacherMenu.classList.contains('open')) return;
+  startHold();
+});
+viewer.addEventListener('pointermove', () => {
+  moved = true;
+  cancelHold();
+});
+viewer.addEventListener('pointerup', cancelHold);
+viewer.addEventListener('pointercancel', cancelHold);
+
+document.getElementById('firstBtn').addEventListener('click', () => {
+  questionIndex = 0;
+  pageIndex = 0;
+  highlight = false;
+  render();
   closeTeacherMenu();
 });
-teacherMenu.addEventListener('click',e=>{ if(e.target===teacherMenu) closeTeacherMenu(); });
+document.getElementById('answerBtn').addEventListener('click', () => {
+  pageIndex = 1;
+  highlight = true;
+  render();
+  closeTeacherMenu();
+});
+document.getElementById('resumeBtn').addEventListener('click', closeTeacherMenu);
+document.getElementById('exitBtn').addEventListener('click', closeViewer);
+document.getElementById('fullscreenBtn').addEventListener('click', async () => {
+  try {
+    if (!document.fullscreenElement) {
+      await document.documentElement.requestFullscreen();
+    } else {
+      await document.exitFullscreen();
+    }
+  } catch (e) {}
+  closeTeacherMenu();
+});
+teacherMenu.addEventListener('click', e => {
+  if (e.target === teacherMenu) closeTeacherMenu();
+});
 
 render();
