@@ -188,3 +188,27 @@ button{font:inherit}
     padding-bottom:8px;
   }
 }
+
+
+/* Ver3.0：教材編が増えてもPC・スマートフォンでスクロール可能 */
+#menu{
+  overflow-y:auto !important;
+  overflow-x:hidden;
+  align-items:flex-start !important;
+  justify-content:center;
+  -webkit-overflow-scrolling:touch;
+}
+.menu-wrap{
+  height:auto !important;
+  min-height:calc(100dvh - 48px);
+  padding-top:24px;
+  padding-bottom:max(28px,env(safe-area-inset-bottom));
+}
+.material-list{
+  width:100%;
+}
+@media (min-width:761px){
+  .scene-card{
+    min-height:150px;
+  }
+}

@@ -1,20 +1,28 @@
 registerQuestion({
-  scene: 'festival',
-  id: 'festival-balloon-disappears',
+  scene: 'park',
+  id: 'park-08',
   before: {
-    lanternCount: 5,
-    balloon: true,
-    goldfishCount: 1,
-    maskType: 'fox',
-    cottonCandy: true,
-    childYukataColor: '#79b7f2'
-  },
+  'ball': false,
+  'flower': true,
+  'birdCount': 2,
+  'shirtColor': '#ef8b8b',
+  'cup': true,
+  'flowerSide': 'right',
+  'kite': true,
+  'hat': false,
+  'cloudCount': 2,
+  'benchBag': false
+},
   after: {
-    lanternCount: 5,
-    balloon: false,
-    goldfishCount: 1,
-    maskType: 'fox',
-    cottonCandy: true,
-    childYukataColor: '#79b7f2'
-  }
+  'ball': false,
+  'flower': true,
+  'birdCount': 2,
+  'shirtColor': '#ef8b8b',
+  'cup': true,
+  'flowerSide': 'right',
+  'kite': true,
+  'hat': false,
+  'cloudCount': 1,
+  'benchBag': false
+}
 });

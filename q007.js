@@ -1,20 +1,28 @@
 registerQuestion({
   scene: 'park',
-  id: 'bird-increases',
+  id: 'park-07',
   before: {
-    ball: false,
-    flower: true,
-    birdCount: 1,
-    shirtColor: '#ef8b67',
-    cup: true,
-    flowerSide: 'right'
-  },
+  'ball': false,
+  'flower': true,
+  'birdCount': 2,
+  'shirtColor': '#ef8b8b',
+  'cup': true,
+  'flowerSide': 'right',
+  'kite': true,
+  'hat': true,
+  'cloudCount': 2,
+  'benchBag': false
+},
   after: {
-    ball: false,
-    flower: true,
-    birdCount: 2,
-    shirtColor: '#ef8b67',
-    cup: true,
-    flowerSide: 'right'
-  }
+  'ball': false,
+  'flower': true,
+  'birdCount': 2,
+  'shirtColor': '#ef8b8b',
+  'cup': true,
+  'flowerSide': 'right',
+  'kite': true,
+  'hat': false,
+  'cloudCount': 2,
+  'benchBag': false
+}
 });

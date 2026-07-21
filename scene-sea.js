@@ -1,0 +1,15 @@
+registerScene('sea', function renderSea(state = {}, showHighlight = false) {
+  const s={boat:true, crabCount:1, shellCount:2, umbrellaColor:'#f7cc58', cloudCount:2, seagullCount:2, sandcastle:true, starfish:true, floatColor:'#f27b78', fishCount:2, ...state};
+  const clouds=Array.from({length:s.cloudCount},(_,i)=>`<g transform="translate(${180+i*420} ${120+i*25})" fill="#fff"><circle r="34"/><circle cx="45" cy="-14" r="46"/><circle cx="90" r="34"/><rect x="0" width="90" height="34"/></g>`).join('');
+  const gulls=Array.from({length:s.seagullCount},(_,i)=>`<path d="M${930+i*150} ${170+i*45}q30-35 60 0q30-35 60 0" fill="none" stroke="#4e6270" stroke-width="10"/>`).join('');
+  const shells=Array.from({length:s.shellCount},(_,i)=>`<path d="M${420+i*95} ${760+i*20}q32-45 64 0v28h-64z" fill="#f4b8b1" stroke="#fff" stroke-width="6"/>`).join('');
+  const crabs=Array.from({length:s.crabCount},(_,i)=>`<g transform="translate(${1040+i*110} ${760-i*20})" stroke="#c5574d" stroke-width="10"><ellipse rx="42" ry="28" fill="#ef6f61"/><path d="M-30-10l-45-30M30-10l45-30M-30 10l-50 35M30 10l50 35"/><circle cx="-16" cy="-30" r="8" fill="#fff"/><circle cx="16" cy="-30" r="8" fill="#fff"/></g>`).join('');
+  const fish=Array.from({length:s.fishCount},(_,i)=>`<g transform="translate(${700+i*130} ${520+i*40})"><ellipse rx="38" ry="22" fill="${i%2?'#ffd15c':'#f28c8c'}"/><path d="M-35 0l-34-22v44z" fill="#7ec3d9"/></g>`).join('');
+  return `<svg viewBox="0 0 1600 900" role="img" aria-label="海の場面"><rect width="1600" height="900" fill="#bfeaff"/>${clouds}<circle cx="1425" cy="100" r="65" fill="#ffe372"/><path d="M0 400q300-40 600 0t600 0t400 0v300H0z" fill="#58b9df"/><path d="M0 480q160-50 320 0t320 0t320 0t320 0t320 0" fill="none" stroke="#d8f8ff" stroke-width="18"/><path d="M0 650q360-80 720 0t880 0v250H0z" fill="#efd08c"/>
+  ${s.boat?'<g transform="translate(1130 330)"><path d="M-100 30h200l-45 75h-110z" fill="#ef765f"/><path d="M0-140V30" stroke="#6f5a4d" stroke-width="12"/><path d="M0-130l100 90H0z" fill="#fff2c9"/></g>':''}${gulls}${fish}
+  <g transform="translate(230 500)"><path d="M0 20q130-140 260 0z" fill="${s.umbrellaColor}" stroke="#fff" stroke-width="10"/><path d="M130 20v260" stroke="#8b6a50" stroke-width="15"/></g>
+  <g transform="translate(360 650)"><circle r="68" fill="none" stroke="${s.floatColor}" stroke-width="30"/></g>
+  ${s.sandcastle?'<g transform="translate(720 715)" fill="#d8b66f" stroke="#fff0c8" stroke-width="7"><rect x="-90" y="-40" width="180" height="110"/><rect x="-125" y="-75" width="70" height="145"/><rect x="55" y="-75" width="70" height="145"/><path d="M-125-75l35-35 35 35M55-75l35-35 35 35"/></g>':''}
+  ${shells}${crabs}${s.starfish?'<path d="M1330 740l22 48 52 5-40 35 13 52-47-27-47 27 13-52-40-35 52-5z" fill="#ef8a75"/>':''}
+  ${showHighlight?'<rect x="20" y="20" width="1560" height="860" rx="30" fill="none" stroke="#ff5e5e" stroke-width="18" stroke-dasharray="30 20"/>':''}</svg>`;
+});
