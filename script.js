@@ -1,6 +1,7 @@
 const menu = document.getElementById('menu');
 const viewer = document.getElementById('viewer');
 const scene = document.getElementById('scene');
+const paperStage = document.getElementById('paperStage');
 const counter = document.getElementById('counter');
 const teacherMenu = document.getElementById('teacherMenu');
 const hint = document.getElementById('hint');
@@ -8,6 +9,7 @@ let step = 0;
 let highlight = false;
 let holdTimer = null;
 let moved = false;
+let isTurning = false;
 
 function parkSvg(s){
   const ball = s.ball ? `<g class="change-target"><circle cx="1220" cy="690" r="52" fill="#ffcf4a" stroke="#fff" stroke-width="10"/><path d="M1170 690h100M1220 640v100" stroke="#ef7c57" stroke-width="16"/></g>` : '';
@@ -53,11 +55,36 @@ function openViewer(){
   hint.classList.add('show'); setTimeout(()=>hint.classList.remove('show'),2500);
 }
 function closeViewer(){
+  isTurning=false; paperStage.classList.remove('turning-next','turning-prev','arrive-next','arrive-prev');
   viewer.classList.remove('active'); menu.classList.add('active'); closeTeacherMenu();
   if(document.fullscreenElement) document.exitFullscreen().catch(()=>{});
 }
-function next(){ if(step < material.steps.length - 1){ step++; highlight=false; render(); } }
-function prev(){ if(step > 0){ step--; highlight=false; render(); } }
+function turnPage(direction){
+  if(isTurning) return;
+  const target = direction === 'next' ? step + 1 : step - 1;
+  if(target < 0 || target >= material.steps.length) return;
+
+  isTurning = true;
+  highlight = false;
+  const outClass = direction === 'next' ? 'turning-next' : 'turning-prev';
+  const inClass = direction === 'next' ? 'arrive-next' : 'arrive-prev';
+  paperStage.classList.remove('turning-next','turning-prev','arrive-next','arrive-prev');
+  void paperStage.offsetWidth;
+  paperStage.classList.add(outClass);
+
+  window.setTimeout(()=>{
+    step = target;
+    render();
+    paperStage.classList.remove(outClass);
+    paperStage.classList.add(inClass);
+    window.setTimeout(()=>{
+      paperStage.classList.remove(inClass);
+      isTurning = false;
+    },340);
+  },360);
+}
+function next(){ turnPage('next'); }
+function prev(){ turnPage('prev'); }
 function openTeacherMenu(){ teacherMenu.classList.add('open'); teacherMenu.setAttribute('aria-hidden','false'); }
 function closeTeacherMenu(){ teacherMenu.classList.remove('open'); teacherMenu.setAttribute('aria-hidden','true'); }
 

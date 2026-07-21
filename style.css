@@ -23,3 +23,79 @@ button{font:inherit}
 #teacherMenu{position:absolute;inset:0;z-index:12;display:none;align-items:center;justify-content:center;background:rgba(20,35,43,.58);backdrop-filter:blur(5px);padding:24px}#teacherMenu.open{display:flex}
 .panel{width:min(560px,100%);background:#fff;border-radius:26px;padding:26px;box-shadow:0 24px 60px rgba(0,0,0,.35)}.panel h3{font-size:28px;margin:0 0 18px}.panel .row{display:flex;gap:12px;flex-wrap:wrap}.panel button{border:0;border-radius:16px;padding:14px 18px;font-weight:800;font-size:18px;background:#eaf5fa;color:#234;cursor:pointer}.panel button.primary{background:var(--accent);color:#fff}.panel button.danger{background:#ffe8e8;color:#9b3838}.panel p{color:var(--muted);line-height:1.7}
 @media(max-width:720px){.material-card{grid-template-columns:1fr}.start-btn{width:100%}.menu-wrap{justify-content:flex-start;padding-top:28px}.close-btn{width:54px;height:54px;font-size:28px}}
+/* Ver1.1 電子紙芝居風ページめくり */
+#paperStage{
+  position:absolute;
+  inset:0;
+  overflow:hidden;
+  perspective:1800px;
+  background:#fff;
+}
+#scene.paper-page{
+  position:absolute;
+  inset:0;
+  transform-style:preserve-3d;
+  backface-visibility:hidden;
+  will-change:transform,filter,opacity;
+  background:#fff;
+  box-shadow:0 0 0 rgba(0,0,0,0);
+}
+#paperBack{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  opacity:0;
+  background:linear-gradient(90deg,#fff 0%,#fbfbf8 54%,#ece9df 100%);
+  z-index:2;
+}
+#paperStage.turning-next #scene{
+  transform-origin:left center;
+  animation:paperNext .48s cubic-bezier(.55,.06,.32,1) both;
+  z-index:3;
+}
+#paperStage.turning-prev #scene{
+  transform-origin:right center;
+  animation:paperPrev .48s cubic-bezier(.55,.06,.32,1) both;
+  z-index:3;
+}
+#paperStage.turning-next #paperBack,
+#paperStage.turning-prev #paperBack{
+  animation:paperWhite .48s ease both;
+}
+#paperStage.arrive-next #scene{
+  transform-origin:right center;
+  animation:paperArriveNext .34s cubic-bezier(.2,.75,.25,1) both;
+}
+#paperStage.arrive-prev #scene{
+  transform-origin:left center;
+  animation:paperArrivePrev .34s cubic-bezier(.2,.75,.25,1) both;
+}
+@keyframes paperNext{
+  0%{transform:translateX(0) rotateY(0deg);filter:brightness(1);box-shadow:0 0 0 rgba(0,0,0,0)}
+  48%{transform:translateX(-5%) rotateY(-18deg);filter:brightness(.97);box-shadow:28px 0 38px rgba(0,0,0,.18)}
+  100%{transform:translateX(-102%) rotateY(-38deg);filter:brightness(.93);box-shadow:40px 0 56px rgba(0,0,0,.2)}
+}
+@keyframes paperPrev{
+  0%{transform:translateX(0) rotateY(0deg);filter:brightness(1);box-shadow:0 0 0 rgba(0,0,0,0)}
+  48%{transform:translateX(5%) rotateY(18deg);filter:brightness(.97);box-shadow:-28px 0 38px rgba(0,0,0,.18)}
+  100%{transform:translateX(102%) rotateY(38deg);filter:brightness(.93);box-shadow:-40px 0 56px rgba(0,0,0,.2)}
+}
+@keyframes paperWhite{
+  0%{opacity:0}
+  45%{opacity:.35}
+  70%{opacity:1}
+  100%{opacity:1}
+}
+@keyframes paperArriveNext{
+  0%{transform:translateX(7%) rotateY(6deg);opacity:.5;filter:brightness(1.04)}
+  100%{transform:translateX(0) rotateY(0);opacity:1;filter:brightness(1)}
+}
+@keyframes paperArrivePrev{
+  0%{transform:translateX(-7%) rotateY(-6deg);opacity:.5;filter:brightness(1.04)}
+  100%{transform:translateX(0) rotateY(0);opacity:1;filter:brightness(1)}
+}
+@media (prefers-reduced-motion:reduce){
+  #paperStage.turning-next #scene,#paperStage.turning-prev #scene,
+  #paperStage.arrive-next #scene,#paperStage.arrive-prev #scene,
+  #paperStage.turning-next #paperBack,#paperStage.turning-prev #paperBack{animation-duration:.16s}
+}
