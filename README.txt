@@ -1,49 +1,67 @@
-療育教材「みんなでみつけよう！」 Ver1.4
+療育教材「みんなでみつけよう！」 Ver2.0
 
-【今回の変更】
-・問題データを「変化前／変化後」の1セットとして管理
-・data.jsへ問題オブジェクトを追加するだけで問題数が自動的に増える構造へ変更
-・問題数の手入力を廃止
-・画面右側で「変化前→変化後→次の問題」へ進む
-・画面左側で逆順に戻る
-・先生用メニューの「変化を強調」で、現在の問題の変化後を表示
+【Ver2.0の目的】
+問題データと風景の描画処理を分離し、公園以外の場面も追加できる構造にしました。
 
-【新しい問題の追加方法】
-data.jsのquestions配列の最後へ、以下の形を追加します。
+【収録内容】
+・公園シーン：7問
+・お祭りシーン：3問
+・合計10問
+・q011.js～q030.js：未使用の空ファイル
 
-,{
-  id: 'new-question',
-  before: {
-    ball: true,
-    flower: false,
-    birdCount: 0,
-    shirtColor: '#79b7f2',
-    cup: false,
-    flowerSide: 'left'
-  },
-  after: {
-    ball: false,
-    flower: false,
-    birdCount: 0,
-    shirtColor: '#79b7f2',
-    cup: false,
-    flowerSide: 'left'
-  }
-}
+【ファイル構成】
+index.html
+style.css
+script.js
+scene-loader.js
+question-loader.js
 
-保存後、index.htmlを開き直すだけで問題が追加されます。
+scenes/
+  park.js
+  festival.js
 
-【現在変更できる項目】
-ball：ボールの表示 true / false
-flower：花の表示 true / false
-birdCount：鳥の数 0 / 1 / 2
-shirtColor：服の色 CSSカラー
-cup：コップの表示 true / false
-flowerSide：花の位置 'left' / 'right'
+questions/
+  q001.js～q030.js
 
-【注意】
-現在は「公園の場面」を使った問題をデータ追加だけで増やせます。
-部屋や教室など、まったく新しい背景を追加する場合は、背景を描く処理の追加が必要です。
+【仕組み】
+各問題ファイルに、使用する風景をsceneで指定します。
 
-【GitHub Pages更新】
-このフォルダ内の4ファイルを既存リポジトリへ上書きしてください。
+公園：
+scene: 'park'
+
+お祭り：
+scene: 'festival'
+
+script.jsがsceneの指定を確認し、対応するscenesファイルの描画処理を自動で使用します。
+
+【新しい問題を追加するとき】
+フォルダ一式をチャッピーへ渡し、次のように依頼します。
+
+例：
+「q011.jsに、お祭りで綿あめが消える問題を追加して」
+「次の空ファイルに、公園で服の色が変わる問題を追加して」
+
+ユーザー自身がコードをコピーして書き足す必要はありません。
+
+【新しい風景を追加するとき】
+例：
+「教室シーンを追加して、その教室を使った問題を3問作って」
+
+チャッピーが次の作業を行います。
+1. scenes/classroom.jsを作成
+2. index.htmlへシーンファイルの参照を追加
+3. 空いている問題ファイルへscene: 'classroom'の問題を登録
+
+【現在のお祭りシーンで使える変化】
+lanternCount：提灯の数
+balloon：風船の表示
+goldfishCount：金魚の数
+maskType：お面の種類（fox / cat）
+cottonCandy：綿あめの表示
+childYukataColor：子どもの浴衣の色
+
+【安全設計】
+・未登録のシーンを指定した問題は、エラー表示に切り替わります。
+・問題IDの重複やbefore／after不足は自動で除外します。
+・空ファイルは問題数に含まれません。
+・1つの問題ファイルに不備があっても、正常な問題は継続して使用できます。
