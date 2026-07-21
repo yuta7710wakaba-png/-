@@ -7,47 +7,46 @@ const counter = document.getElementById('counter');
 const teacherMenu = document.getElementById('teacherMenu');
 const hint = document.getElementById('hint');
 
-let questionIndex = 0;
-let pageIndex = 0; // 0＝変化前、1＝変化後
+let selectedScene = '';
+let activeQuestions = [];
+let stepIndex = 0;
 let highlight = false;
 let holdTimer = null;
 let moved = false;
 let isTurning = false;
 
-function getQuestion(qIndex = questionIndex) {
-  return material.questions[qIndex] || null;
+function getRenderer() {
+  return window.sceneRenderers[selectedScene];
 }
 
-function getCurrentState(qIndex = questionIndex, pIndex = pageIndex) {
-  const question = getQuestion(qIndex);
-  if (!question) return {};
-  return pIndex === 0 ? question.before : question.after;
+function getStepState(index = stepIndex) {
+  if (activeQuestions.length === 0) return {};
+  if (index === 0) return activeQuestions[0].before;
+  return activeQuestions[index - 1].after;
 }
 
-function renderScene(qIndex = questionIndex, pIndex = pageIndex, showHighlight = highlight) {
-  const question = getQuestion(qIndex);
-
-  if (!question) {
-    return '<div class="scene-error">表示できる問題がありません</div>';
-  }
-
-  const renderer = window.sceneRenderers[question.scene];
+function renderScene(index = stepIndex, showHighlight = highlight) {
+  const renderer = getRenderer();
 
   if (typeof renderer !== 'function') {
-    console.warn(`シーン「${question.scene}」が登録されていません`);
-    return `<div class="scene-error">シーン「${question.scene}」を表示できません</div>`;
+    return `<div class="scene-error">「${selectedScene}」の風景を表示できません</div>`;
   }
 
-  return renderer(getCurrentState(qIndex, pIndex), showHighlight);
+  return renderer(getStepState(index), showHighlight);
 }
 
 function updateCounter() {
-  if (material.questions.length === 0) {
+  if (activeQuestions.length === 0) {
     counter.textContent = '問題 0/0';
     return;
   }
-  const pageText = pageIndex === 0 ? '変化前' : '変化後';
-  counter.textContent = `問題 ${questionIndex + 1}/${material.questions.length}｜${pageText}`;
+
+  if (stepIndex === 0) {
+    counter.textContent = `よくみてね｜全${activeQuestions.length}問`;
+    return;
+  }
+
+  counter.textContent = `問題 ${stepIndex}/${activeQuestions.length}`;
 }
 
 function render() {
@@ -56,19 +55,22 @@ function render() {
   updateCounter();
 }
 
-function openViewer() {
-  if (material.questions.length === 0) {
-    alert('表示できる問題がありません。');
+function openViewer(sceneName) {
+  selectedScene = sceneName;
+  activeQuestions = material.questions.filter(question => question.scene === sceneName);
+
+  if (activeQuestions.length === 0) {
+    alert('この風景には表示できる問題がありません。');
     return;
   }
-  questionIndex = 0;
-  pageIndex = 0;
+
+  stepIndex = 0;
   highlight = false;
   render();
   menu.classList.remove('active');
   viewer.classList.add('active');
   hint.classList.add('show');
-  setTimeout(() => hint.classList.remove('show'), 2500);
+  window.setTimeout(() => hint.classList.remove('show'), 2500);
 }
 
 function closeViewer() {
@@ -77,53 +79,35 @@ function closeViewer() {
   viewer.classList.remove('active');
   menu.classList.add('active');
   closeTeacherMenu();
-  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+
+  if (document.fullscreenElement) {
+    document.exitFullscreen().catch(() => {});
+  }
 }
 
 function getTarget(direction) {
-  if (material.questions.length === 0) return null;
-
-  let q = questionIndex;
-  let p = pageIndex;
-
-  if (direction === 'next') {
-    if (p === 0) {
-      p = 1;
-    } else {
-      q += 1;
-      p = 0;
-    }
-  } else {
-    if (p === 1) {
-      p = 0;
-    } else {
-      q -= 1;
-      p = 1;
-    }
-  }
-
-  if (q < 0 || q >= material.questions.length) return null;
-  return { questionIndex: q, pageIndex: p };
+  const target = direction === 'next' ? stepIndex + 1 : stepIndex - 1;
+  if (target < 0 || target > activeQuestions.length) return null;
+  return target;
 }
 
 function turnPage(direction) {
   if (isTurning) return;
 
-  const target = getTarget(direction);
-  if (!target) return;
+  const targetIndex = getTarget(direction);
+  if (targetIndex === null) return;
 
   isTurning = true;
   highlight = false;
   const turnClass = direction === 'next' ? 'turning-next' : 'turning-prev';
 
-  nextScene.innerHTML = renderScene(target.questionIndex, target.pageIndex, false);
+  nextScene.innerHTML = renderScene(targetIndex, false);
   paperStage.classList.remove('turning-next', 'turning-prev');
   void paperStage.offsetWidth;
   paperStage.classList.add(turnClass);
 
   window.setTimeout(() => {
-    questionIndex = target.questionIndex;
-    pageIndex = target.pageIndex;
+    stepIndex = targetIndex;
     scene.innerHTML = nextScene.innerHTML;
     nextScene.innerHTML = '';
     updateCounter();
@@ -132,12 +116,19 @@ function turnPage(direction) {
   }, 640);
 }
 
-function next() { turnPage('next'); }
-function prev() { turnPage('prev'); }
+function next() {
+  turnPage('next');
+}
+
+function prev() {
+  turnPage('prev');
+}
+
 function openTeacherMenu() {
   teacherMenu.classList.add('open');
   teacherMenu.setAttribute('aria-hidden', 'false');
 }
+
 function closeTeacherMenu() {
   teacherMenu.classList.remove('open');
   teacherMenu.setAttribute('aria-hidden', 'true');
@@ -146,50 +137,64 @@ function closeTeacherMenu() {
 function startHold() {
   moved = false;
   clearTimeout(holdTimer);
-  holdTimer = setTimeout(() => {
+  holdTimer = window.setTimeout(() => {
     if (!moved) openTeacherMenu();
   }, 900);
 }
-function cancelHold() { clearTimeout(holdTimer); }
 
-document.getElementById('materialTitle').textContent = material.title;
-document.getElementById('startBtn').addEventListener('click', openViewer);
-document.getElementById('closeBtn').addEventListener('click', e => {
-  e.stopPropagation();
+function cancelHold() {
+  clearTimeout(holdTimer);
+}
+
+document.querySelectorAll('.scene-start-btn').forEach(button => {
+  button.addEventListener('click', () => openViewer(button.dataset.scene));
+});
+
+document.getElementById('closeBtn').addEventListener('click', event => {
+  event.stopPropagation();
   closeViewer();
 });
+
 document.getElementById('nextZone').addEventListener('click', () => {
   if (!teacherMenu.classList.contains('open')) next();
 });
+
 document.getElementById('prevZone').addEventListener('click', () => {
   if (!teacherMenu.classList.contains('open')) prev();
 });
-viewer.addEventListener('pointerdown', e => {
-  if (e.target.closest('button') || teacherMenu.classList.contains('open')) return;
+
+viewer.addEventListener('pointerdown', event => {
+  if (event.target.closest('button') || teacherMenu.classList.contains('open')) return;
   startHold();
 });
+
 viewer.addEventListener('pointermove', () => {
   moved = true;
   cancelHold();
 });
+
 viewer.addEventListener('pointerup', cancelHold);
 viewer.addEventListener('pointercancel', cancelHold);
 
 document.getElementById('firstBtn').addEventListener('click', () => {
-  questionIndex = 0;
-  pageIndex = 0;
+  stepIndex = 0;
   highlight = false;
   render();
   closeTeacherMenu();
 });
+
 document.getElementById('answerBtn').addEventListener('click', () => {
-  pageIndex = 1;
+  if (stepIndex === 0 && activeQuestions.length > 0) {
+    stepIndex = 1;
+  }
   highlight = true;
   render();
   closeTeacherMenu();
 });
+
 document.getElementById('resumeBtn').addEventListener('click', closeTeacherMenu);
 document.getElementById('exitBtn').addEventListener('click', closeViewer);
+
 document.getElementById('fullscreenBtn').addEventListener('click', async () => {
   try {
     if (!document.fullscreenElement) {
@@ -197,11 +202,13 @@ document.getElementById('fullscreenBtn').addEventListener('click', async () => {
     } else {
       await document.exitFullscreen();
     }
-  } catch (e) {}
+  } catch (error) {
+    console.warn('全画面表示を切り替えられませんでした', error);
+  }
+
   closeTeacherMenu();
 });
-teacherMenu.addEventListener('click', e => {
-  if (e.target === teacherMenu) closeTeacherMenu();
-});
 
-render();
+teacherMenu.addEventListener('click', event => {
+  if (event.target === teacherMenu) closeTeacherMenu();
+});

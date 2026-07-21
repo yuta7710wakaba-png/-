@@ -3,16 +3,16 @@ registerQuestion({
   id: 'festival-mask-changes',
   before: {
     lanternCount: 5,
-    balloon: true,
-    goldfishCount: 2,
+    balloon: false,
+    goldfishCount: 1,
     maskType: 'fox',
     cottonCandy: true,
     childYukataColor: '#79b7f2'
   },
   after: {
     lanternCount: 5,
-    balloon: true,
-    goldfishCount: 2,
+    balloon: false,
+    goldfishCount: 1,
     maskType: 'cat',
     cottonCandy: true,
     childYukataColor: '#79b7f2'

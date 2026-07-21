@@ -4,7 +4,7 @@ registerQuestion({
   before: {
     lanternCount: 5,
     balloon: true,
-    goldfishCount: 2,
+    goldfishCount: 1,
     maskType: 'fox',
     cottonCandy: true,
     childYukataColor: '#79b7f2'
@@ -12,7 +12,7 @@ registerQuestion({
   after: {
     lanternCount: 5,
     balloon: false,
-    goldfishCount: 2,
+    goldfishCount: 1,
     maskType: 'fox',
     cottonCandy: true,
     childYukataColor: '#79b7f2'
